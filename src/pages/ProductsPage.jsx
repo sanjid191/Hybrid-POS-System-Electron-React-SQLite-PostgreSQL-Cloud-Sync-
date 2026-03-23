@@ -1,6 +1,66 @@
-import { Package } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Package, Search, Plus, Edit2, Trash2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import ProductForm from '../components/Products/ProductForm';
+import './ProductsPage.css';
 
 function ProductsPage() {
+  const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+
+  const fetchProducts = async (searchQuery = '') => {
+    const res = await window.electronAPI.getProducts({ search: searchQuery });
+    if (res.success) {
+      setProducts(res.data);
+    } else {
+      console.error('Failed to fetch products:', res.error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchProducts(search);
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [search]);
+
+  const handleSave = async (data) => {
+    if (editingProduct) {
+      const res = await window.electronAPI.updateProduct(editingProduct.id, data);
+      if (res.success) {
+        setProducts(products.map(p => p.id === editingProduct.id ? res.data : p));
+      }
+    } else {
+      data.id = uuidv4();
+      const res = await window.electronAPI.createProduct(data);
+      if (res.success) {
+        setProducts([res.data, ...products]);
+      }
+    }
+    setIsFormOpen(false);
+    setEditingProduct(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      const res = await window.electronAPI.deleteProduct(id);
+      if (res.success) {
+        setProducts(products.filter(p => p.id !== id));
+      }
+    }
+  };
+
+  const openEdit = (product) => {
+    setEditingProduct(product);
+    setIsFormOpen(true);
+  };
+
   return (
     <div className="page animate-fadeIn">
       <div className="page-header">
@@ -8,13 +68,83 @@ function ProductsPage() {
           <h2 className="page-title">Products</h2>
           <p className="page-subtitle">Manage your product catalog and inventory.</p>
         </div>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
+        >
+          <Plus size={18} /> Add Product
+        </button>
       </div>
-      <div className="card" style={{ padding: 'var(--space-2xl)', textAlign: 'center' }}>
-        <Package size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-        <p style={{ color: 'var(--text-muted)' }}>
-          Product management will be built in Phase 3.
-        </p>
+
+      <div className="card products-container">
+        <div className="products-toolbar">
+          <div className="search-bar">
+            <Search size={18} className="search-icon" />
+            <input 
+              type="text" 
+              className="input search-input" 
+              placeholder="Search products by name or barcode..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price (৳)</th>
+                <th>Stock</th>
+                <th>Unit</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.length > 0 ? (
+                products.map((product) => (
+                  <tr key={product.id}>
+                    <td className="font-medium text-white">{product.name}</td>
+                    <td>{product.category || '—'}</td>
+                    <td>{product.price.toFixed(2)}</td>
+                    <td>
+                      <span className={`stock-badge ${product.stock <= product.low_stock_threshold ? 'stock-low' : 'stock-good'}`}>
+                        {product.stock}
+                      </span>
+                    </td>
+                    <td>{product.unit}</td>
+                    <td className="actions-cell">
+                      <button className="btn-icon text-primary" onClick={() => openEdit(product)} title="Edit">
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="btn-icon text-danger" onClick={() => handleDelete(product.id)} title="Delete">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="empty-state">
+                    <Package size={48} className="empty-icon" />
+                    <p>No products found.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {isFormOpen && (
+        <ProductForm 
+          initialData={editingProduct} 
+          onSave={handleSave} 
+          onClose={() => setIsFormOpen(false)} 
+        />
+      )}
     </div>
   );
 }

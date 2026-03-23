@@ -1,0 +1,28 @@
+.pos-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.pos-products-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-xl);
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-root);
+}
+
+.pos-cart-panel {
+  width: 450px;
+  min-width: 450px;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+}
