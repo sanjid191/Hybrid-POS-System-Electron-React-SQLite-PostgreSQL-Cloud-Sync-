@@ -2,20 +2,27 @@ const { getDbConnection } = require('../connection');
 
 function getAllProducts(filters = {}) {
   const db = getDbConnection();
-  let query = "SELECT * FROM products WHERE 1=1";
+  let query = `
+    SELECT p.*,
+      COALESCE(SUM(si.quantity), 0) as lifetime_sold,
+      COALESCE(SUM(si.total), 0) as lifetime_revenue
+    FROM products p
+    LEFT JOIN sale_items si ON p.id = si.product_id
+    WHERE 1=1
+  `;
   const params = [];
 
   if (filters.search) {
-    query += " AND (name LIKE ? OR barcode LIKE ?)";
+    query += " AND (p.name LIKE ? OR p.barcode LIKE ?)";
     params.push(`%${filters.search}%`, `%${filters.search}%`);
   }
 
   if (filters.category) {
-    query += " AND category = ?";
+    query += " AND p.category = ?";
     params.push(filters.category);
   }
 
-  query += " ORDER BY name ASC";
+  query += " GROUP BY p.id ORDER BY p.name ASC";
   
   const stmt = db.prepare(query);
   return stmt.all(...params);

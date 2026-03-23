@@ -42,7 +42,15 @@ router.get('/stats', async (req, res) => {
 // Generic Fetchers
 router.get('/products', async (req, res) => {
   try {
-     const prods = await db.query('SELECT * FROM products ORDER BY created_at DESC');
+     const prods = await db.query(`
+      SELECT p.*,
+        COALESCE(SUM(si.quantity), 0) as lifetime_sold,
+        COALESCE(SUM(si.total), 0) as lifetime_revenue
+      FROM products p
+      LEFT JOIN sale_items si ON p.id = si.product_id
+      GROUP BY p.id
+      ORDER BY p.name ASC
+     `);
      res.json({ success: true, data: prods.rows });
   } catch (err) { res.json({ success: false, error: err.message }); }
 });

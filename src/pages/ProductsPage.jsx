@@ -7,6 +7,7 @@ import './ProductsPage.css';
 function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('inventory');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
@@ -65,15 +66,36 @@ function ProductsPage() {
     <div className="page animate-fadeIn">
       <div className="page-header">
         <div>
-          <h2 className="page-title">Products</h2>
-          <p className="page-subtitle">Manage your product catalog and inventory.</p>
+          <h2 className="page-title">{activeTab === 'inventory' ? 'Products & Inventory' : 'Product Sales Analytics'}</h2>
+          <p className="page-subtitle">
+            {activeTab === 'inventory' ? 'Manage your product catalog and inventory levels.' : 'Track net gross, and cost equations across individual products organically.'}
+          </p>
         </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
-        >
-          <Plus size={18} /> Add Product
-        </button>
+        {activeTab === 'inventory' && (
+          <button 
+            className="btn btn-primary" 
+            onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
+          >
+            <Plus size={18} /> Add Product
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+         <button 
+           className={`btn ${activeTab === 'inventory' ? 'btn-primary' : 'btn-ghost'}`}
+           onClick={() => setActiveTab('inventory')}
+           style={{ border: activeTab === 'inventory' ? 'none' : '1px solid var(--border-color)' }}
+         >
+           Physical Inventory
+         </button>
+         <button 
+           className={`btn ${activeTab === 'analytics' ? 'btn-primary' : 'btn-ghost'}`}
+           onClick={() => setActiveTab('analytics')}
+           style={{ border: activeTab === 'analytics' ? 'none' : '1px solid var(--border-color)' }}
+         >
+           Advanced Sales Analytics
+         </button>
       </div>
 
       <div className="card products-container">
@@ -93,38 +115,73 @@ function ProductsPage() {
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price (৳)</th>
-                <th>Stock</th>
-                <th>Unit</th>
-                <th className="text-right">Actions</th>
-              </tr>
+              {activeTab === 'inventory' ? (
+                <tr>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Price (৳)</th>
+                  <th>Cost (৳)</th>
+                  <th>Stock</th>
+                  <th>Unit</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              ) : (
+                <tr>
+                  <th>Product Details</th>
+                  <th>Total Sold</th>
+                  <th>Gross Revenue</th>
+                  <th>Total Cost</th>
+                  <th className="text-right">Net Profit</th>
+                </tr>
+              )}
             </thead>
             <tbody>
               {products.length > 0 ? (
-                products.map((product) => (
-                  <tr key={product.id}>
-                    <td className="font-medium text-white">{product.name}</td>
-                    <td>{product.category || '—'}</td>
-                    <td>{product.price.toFixed(2)}</td>
-                    <td>
-                      <span className={`stock-badge ${product.stock <= product.low_stock_threshold ? 'stock-low' : 'stock-good'}`}>
-                        {product.stock}
-                      </span>
-                    </td>
-                    <td>{product.unit}</td>
-                    <td className="actions-cell">
-                      <button className="btn-icon text-primary" onClick={() => openEdit(product)} title="Edit">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="btn-icon text-danger" onClick={() => handleDelete(product.id)} title="Delete">
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                products.map((product) => {
+                  const itemsSold = parseFloat(product.lifetime_sold) || 0;
+                  const itemRevenue = parseFloat(product.lifetime_revenue) || 0;
+                  const itemCost = itemsSold * (parseFloat(product.cost_price) || 0);
+                  const netProfit = itemRevenue - itemCost;
+                  const isLoss = netProfit < 0;
+
+                  return activeTab === 'inventory' ? (
+                    <tr key={product.id}>
+                      <td className="font-medium text-white">{product.name}</td>
+                      <td>{product.category || '—'}</td>
+                      <td>৳{product.price.toFixed(2)}</td>
+                      <td>৳{(product.cost_price || 0).toFixed(2)}</td>
+                      <td>
+                        <span className={`stock-badge ${product.stock <= product.low_stock_threshold ? 'stock-low' : 'stock-good'}`}>
+                          {product.stock}
+                        </span>
+                      </td>
+                      <td>{product.unit}</td>
+                      <td className="actions-cell">
+                        <button className="btn-icon text-primary" onClick={() => openEdit(product)} title="Edit">
+                          <Edit2 size={16} />
+                        </button>
+                        <button className="btn-icon text-danger" onClick={() => handleDelete(product.id)} title="Delete">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={`analytics-${product.id}`}>
+                      <td>
+                        <span className="font-medium text-white" style={{ display: 'block' }}>{product.name}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Selling AT: ৳{product.price.toFixed(2)} / Costing: ৳{(product.cost_price||0).toFixed(2)}</span>
+                      </td>
+                      <td className="font-bold">{itemsSold} {product.unit}</td>
+                      <td>৳{itemRevenue.toFixed(2)}</td>
+                      <td>৳{itemCost.toFixed(2)}</td>
+                      <td className="actions-cell">
+                         <span className={`stock-badge ${isLoss ? 'stock-low' : 'stock-good'}`}>
+                            {isLoss ? '-' : '+'} ৳{Math.abs(netProfit).toFixed(2)}
+                         </span>
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan="6" className="empty-state">
