@@ -1,19 +1,171 @@
-import { History } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Printer, Calendar, FileText } from 'lucide-react';
+import InvoiceTemplate from '../components/Invoice/InvoiceTemplate';
+import '../pages/ProductsPage.css'; // Reusing generic table styles
+import '../pages/POSPage.css'; // Reusing print area styles
 
 function SalesHistoryPage() {
+  const [sales, setSales] = useState([]);
+  const [search, setSearch] = useState('');
+  
+  // Invoice viewing & printing
+  const [printSale, setPrintSale] = useState(null);
+
+  const fetchSales = async () => {
+    // We can add filtering payload here if needed in future 
+    const res = await window.electronAPI.getSales({});
+    if (res.success) {
+      setSales(res.data);
+    } else {
+      console.error('Failed to fetch sales:', res.error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSales();
+  }, []);
+
+  // Soft Search by Customer Name or ID locally
+  const filteredSales = sales.filter(s => 
+       s.id.toLowerCase().includes(search.toLowerCase()) || 
+       (s.customer_name && s.customer_name.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const handlePrint = async (saleId) => {
+    // Re-fetch the entire sale with item subsets
+    const res = await window.electronAPI.getSaleById(saleId);
+    if (res.success) {
+      setPrintSale(res.data);
+      
+      // Delay to allow DOM update
+      setTimeout(() => {
+        window.print();
+      }, 300);
+    } else {
+      alert("Failed to fetch full receipt data!");
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (sales.length === 0) return;
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Invoice ID,Date,Customer,Total,Paid,Due,Payment Method\n";
+    
+    sales.forEach(row => {
+        let customer = row.customer_name ? `"${row.customer_name}"` : "Walk-in";
+        let date = new Date(row.created_at).toLocaleDateString();
+        // ID snippet
+        let humanId = row.id.split('-').pop().toUpperCase();
+        csvContent += `${humanId},${date},${customer},${row.total.toFixed(2)},${row.paid.toFixed(2)},${row.due.toFixed(2)},${row.payment_method}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link); // Required for FF
+    link.click();
+    link.remove();
+  };
+
   return (
     <div className="page animate-fadeIn">
-      <div className="page-header">
+       <div className="page-header">
         <div>
           <h2 className="page-title">Sales History</h2>
-          <p className="page-subtitle">View and filter your past transactions.</p>
+          <p className="page-subtitle">View and export chronological order logs.</p>
+        </div>
+        <button className="btn btn-secondary" onClick={handleExportCSV}>
+          <FileText size={18} /> Export as CSV
+        </button>
+      </div>
+
+      <div className="card products-container">
+        <div className="products-toolbar" style={{ justifyContent: 'flex-start', gap: 'var(--space-md)' }}>
+          <div className="search-bar" style={{ maxWidth: '300px' }}>
+            <Search size={18} className="search-icon" />
+            <input 
+              type="text" 
+              className="input search-input" 
+              placeholder="Filter by Customer or Trx ID..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {/* Calendar Picker placeholder -> Can wire into SQLite dates natively */}
+          <div className="search-bar" style={{ maxWidth: '200px' }}>
+            <Calendar size={18} className="search-icon" style={{ left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+             <input type="date" className="input" style={{ paddingLeft: '38px', borderRadius: 'var(--radius-full)' }} />
+          </div>
+        </div>
+
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Invoice / Date</th>
+                <th>Client</th>
+                <th>Order Items (Value)</th>
+                <th>Payment</th>
+                <th>Status (Due)</th>
+                <th className="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSales.length > 0 ? (
+                filteredSales.map((sale) => {
+                  const rawDate = new Date(sale.created_at);
+                  const isDue = sale.due > 0;
+                  return (
+                    <tr key={sale.id}>
+                      <td>
+                        <span className="font-medium text-white" style={{ display: 'block' }}>
+                          #{sale.id.split('-').pop().toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          {rawDate.toLocaleDateString()} {rawDate.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}
+                        </span>
+                      </td>
+                      <td className={sale.customer_name ? "text-primary font-medium" : "text-secondary"}>
+                        {sale.customer_name || 'Walk-in'}
+                      </td>
+                      <td className="font-bold">৳{sale.total.toFixed(2)}</td>
+                      <td>
+                         <span style={{ display: 'block', textTransform: 'capitalize' }}>{sale.payment_method}</span>
+                      </td>
+                      <td>
+                          <span className={`stock-badge ${isDue ? 'stock-low' : 'stock-good'}`}>
+                             {isDue ? `Due: ৳${sale.due.toFixed(2)}` : 'Completed Setup'}
+                          </span>
+                      </td>
+                      <td className="actions-cell">
+                        <button 
+                          className="btn-icon text-primary" 
+                          onClick={() => handlePrint(sale.id)} 
+                          title="View / Print Receipt"
+                        >
+                          <Printer size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan="6" className="empty-state">
+                     <FileText size={48} className="empty-icon" />
+                     <p>No verified transaction history matches your criteria.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-      <div className="card" style={{ padding: 'var(--space-2xl)', textAlign: 'center' }}>
-        <History size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-        <p style={{ color: 'var(--text-muted)' }}>
-          Sales history will be built in Phase 6.
-        </p>
+
+      <div className="print-area">
+        {printSale && <InvoiceTemplate sale={printSale} />}
       </div>
     </div>
   );
