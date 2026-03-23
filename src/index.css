@@ -218,6 +218,21 @@ img {
   color: var(--color-primary);
 }
 
+.text-warning { color: var(--color-warning); }
+.text-success { color: var(--color-success); }
+.text-danger  { color: var(--color-danger); }
+
+/* Spin Element */
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+
 .btn-danger {
   background: var(--color-danger);
   color: white;

@@ -192,13 +192,23 @@ function registerIpcHandlers(ipcMain) {
     }
   });
 
-  // ── Sync (placeholder for Phase 9) ──
+  // ── Sync (Phase 9) ──
   ipcMain.handle('sync:trigger', async () => {
-    return { success: false, error: 'Sync not yet implemented' };
+    try {
+      const { triggerSync } = require('./sync-service');
+      return await triggerSync();
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
   });
 
   ipcMain.handle('sync:status', async () => {
-    return { success: true, data: { lastSync: null, pending: 0 } };
+    try {
+      const { getSyncStatus } = require('./sync-service');
+      return { success: true, data: getSyncStatus() };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
   });
 
   // ── Backup (placeholder) ──

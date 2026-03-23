@@ -52,6 +52,16 @@ app.whenReady().then(() => {
   runMigrations();
   
   createWindow();
+
+  // Background Sync Loop (Every 2 Minutes)
+  setInterval(async () => {
+     try {
+        const { triggerSync } = require('./sync-service');
+        await triggerSync();
+     } catch (err) {
+        console.error('[Auto-Sync Error]', err);
+     }
+  }, 120000);
 });
 
 app.on('window-all-closed', () => {
