@@ -222,7 +222,16 @@ img {
 .text-success { color: var(--color-success); }
 .text-danger  { color: var(--color-danger); }
 
-/* Spin Element */
+/* Spin Element & Hiding Input Arrows */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 @keyframes spin {
   100% {
     transform: rotate(360deg);

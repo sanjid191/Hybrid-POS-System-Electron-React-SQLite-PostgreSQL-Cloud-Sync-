@@ -23,7 +23,26 @@
     "url": "https://github.com/sanjid191/Hybrid-POS-System-Electron-React-SQLite-PostgreSQL-Cloud-Sync-/issues"
   },
   "homepage": "https://github.com/sanjid191/Hybrid-POS-System-Electron-React-SQLite-PostgreSQL-Cloud-Sync-#readme",
-  "description": "",
+  "description": "Hybrid POS Offline First Checkout Solution",
+  "build": {
+    "appId": "com.sanjid.hybridpos",
+    "productName": "Hybrid POS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "database/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "asarUnpack": [
+      "**/*.node"
+    ]
+  },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
     "html2canvas": "^1.4.1",

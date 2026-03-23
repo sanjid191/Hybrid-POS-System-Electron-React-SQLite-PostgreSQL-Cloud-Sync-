@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const syncRoutes = require('./routes/sync');
+const webRoutes = require('./routes/web');
 const { verifyApiKey } = require('./middleware/auth');
 
 const app = express();
@@ -16,6 +17,9 @@ app.use(express.json({ limit: '10mb' })); // Support larger batch sync payloads
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Unprotected Read-Only routes for Web Admin
+app.use('/api/web', webRoutes);
 
 // Protect all internal sync endpoints with Authentication
 app.use('/api', verifyApiKey);

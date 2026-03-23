@@ -211,9 +211,31 @@ function registerIpcHandlers(ipcMain) {
     }
   });
 
-  // ── Backup (placeholder) ──
-  ipcMain.handle('backup:export', async (event, destPath) => {
-    return { success: false, error: 'Backup not yet implemented' };
+  // ── Backup (Phase 10) ──
+  ipcMain.handle('backup:export', async () => {
+    try {
+      const fs = require('fs');
+      const { app, dialog } = require('electron');
+      
+      const isDev = !app.isPackaged;
+      const dbPath = isDev 
+        ? path.join(__dirname, '../../local_data.db') 
+        : path.join(app.getPath('userData'), 'pos_data.db');
+
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: 'Backup Hybrid POS Database',
+        defaultPath: `pos_backup_${new Date().toISOString().split('T')[0]}.db`,
+        filters: [{ name: 'SQLite Database', extensions: ['db', 'sqlite'] }]
+      });
+
+      if (!canceled && filePath) {
+        fs.copyFileSync(dbPath, filePath);
+        return { success: true, filePath };
+      }
+      return { success: false, error: 'Cancelled by user' };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
   });
 
   // ── Print ──

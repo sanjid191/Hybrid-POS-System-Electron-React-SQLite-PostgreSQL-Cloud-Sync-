@@ -45,7 +45,29 @@ function Cart({ items, onUpdateQty, onClear, onCheckout, customers, selectedCust
               <div className="cart-item-actions">
                 <div className="qty-controls">
                   <button className="qty-btn" onClick={() => onUpdateQty(item.product_id, item.quantity - 1)}><Minus size={14}/></button>
-                  <span className="qty-display">{item.quantity}</span>
+                  <input 
+                    type="number" 
+                    className="qty-display" 
+                    value={item.quantity === 0 ? '' : item.quantity} 
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      onUpdateQty(item.product_id, val);
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value || e.target.value <= 0) onUpdateQty(item.product_id, 1);
+                    }}
+                    style={{
+                      width: '45px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-primary)',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      outline: 'none',
+                      MozAppearance: 'textfield'
+                    }}
+                  />
                   <button className="qty-btn" onClick={() => onUpdateQty(item.product_id, item.quantity + 1)}><Plus size={14}/></button>
                 </div>
                 <span className="cart-item-total text-primary font-bold">

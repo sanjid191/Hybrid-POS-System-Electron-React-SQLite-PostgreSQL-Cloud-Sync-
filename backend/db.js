@@ -1,5 +1,10 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 require('dotenv').config();
+
+// Force node-postgres to parse PostgreSQL NUMERIC (OID 1700) types cleanly into JS floats natively bypassing string-casting 
+types.setTypeParser(1700, function(val) {
+  return parseFloat(val);
+});
 
 // Assuming DATABASE_URL is stored in the .env file containing the PostgreSQL connection string
 const pool = new Pool({
