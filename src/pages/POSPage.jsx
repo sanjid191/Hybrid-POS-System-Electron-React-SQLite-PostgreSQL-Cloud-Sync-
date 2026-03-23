@@ -45,13 +45,17 @@ function POSPage() {
   };
 
   const updateQuantity = (productId, newQty) => {
-    if (newQty <= 0) {
+    if (newQty === 'REMOVE') {
       setCart(cart.filter(item => item.product_id !== productId));
       return;
     }
+    
+    // Explicitly allow empty strings to exist dynamically inside the state avoiding instant crashes during hard backspaces natively
+    const validQty = (typeof newQty === 'string' && newQty === '') ? '' : parseFloat(newQty) || 0;
+    
     setCart(cart.map(item => 
       item.product_id === productId 
-        ? { ...item, quantity: newQty, total: newQty * item.unit_price } 
+        ? { ...item, quantity: validQty, total: (parseFloat(validQty) || 0) * item.unit_price } 
         : item
     ));
   };
@@ -69,15 +73,36 @@ function POSPage() {
 
   const processSale = async (paymentDetails) => {
     const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
-    // Simple mock logic for final amounts (discount & tax logic can be added here)
     const discount = paymentDetails.discount || 0;
     const finalTotal = subtotal - discount;
     const paid = parseFloat(paymentDetails.paid || 0);
     const due = Math.max(0, finalTotal - paid);
 
+    let finalCustomerId = selectedCustomer?.id || null;
+    let finalCustomerName = selectedCustomer?.name || 'Walk-in Customer';
+    let finalCustomerPhone = selectedCustomer?.phone || '';
+
+    if (!selectedCustomer && paymentDetails.quickCustomer) {
+      const newCust = {
+        id: uuidv4(),
+        name: paymentDetails.quickCustomer.name.trim() + ' (Walk-in)',
+        phone: paymentDetails.quickCustomer.phone || '',
+        email: '',
+        address: '__WALKIN__',
+        total_due: 0
+      };
+      await window.electronAPI.createCustomer(newCust);
+      finalCustomerId = newCust.id;
+      finalCustomerName = newCust.name;
+      finalCustomerPhone = newCust.phone;
+      
+      const fetchNewCrm = await window.electronAPI.getCustomers({});
+      if (fetchNewCrm.success) setCustomers(fetchNewCrm.data);
+    }
+
     const saleData = {
       id: uuidv4(),
-      customer_id: paymentDetails.customer_id || null,
+      customer_id: finalCustomerId,
       subtotal,
       discount,
       tax: 0,
@@ -94,8 +119,8 @@ function POSPage() {
         // Prepare completed sale object for the invoice before clearing cart
         setCompletedSale({
            ...saleData,
-           customer_name: selectedCustomer?.name || 'Walk-in Customer',
-           customer_phone: selectedCustomer?.phone || '',
+           customer_name: finalCustomerName,
+           customer_phone: finalCustomerPhone,
            customer_address: selectedCustomer?.address || '',
            created_at: new Date().toISOString(),
            items: cart
@@ -141,6 +166,7 @@ function POSPage() {
       {isPaymentOpen && (
         <PaymentDialog 
           cartTotal={cart.reduce((sum, item) => sum + item.total, 0)}
+          selectedCustomer={selectedCustomer}
           onClose={() => setIsPaymentOpen(false)}
           onConfirm={processSale}
         />

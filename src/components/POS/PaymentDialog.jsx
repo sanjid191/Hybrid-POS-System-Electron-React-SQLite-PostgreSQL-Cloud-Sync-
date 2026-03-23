@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, UserPlus } from 'lucide-react';
 import '../Products/ProductForm.css'; // Reuse modal styles
 
-function PaymentDialog({ cartTotal, onClose, onConfirm }) {
+function PaymentDialog({ cartTotal, selectedCustomer, onClose, onConfirm }) {
   const [discount, setDiscount] = useState(0);
   const [paid, setPaid] = useState(cartTotal);
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [walkinName, setWalkinName] = useState('');
+  const [walkinPhone, setWalkinPhone] = useState('');
   
   const finalTotal = Math.max(0, cartTotal - discount);
   const due = Math.max(0, finalTotal - paid);
@@ -21,7 +23,8 @@ function PaymentDialog({ cartTotal, onClose, onConfirm }) {
     onConfirm({
       discount,
       paid,
-      method: paymentMethod
+      method: paymentMethod,
+      quickCustomer: walkinName.trim() ? { name: walkinName, phone: walkinPhone } : null
     });
   };
 
@@ -38,6 +41,18 @@ function PaymentDialog({ cartTotal, onClose, onConfirm }) {
             <span>Total Payable</span>
             <span>৳{finalTotal.toFixed(2)}</span>
           </div>
+
+          {!selectedCustomer && (
+            <div style={{ padding: '12px', background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.2)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)' }}>
+              <h4 style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                <UserPlus size={14} /> Quick-Add Customer (Optional)
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <input type="text" className="input" placeholder="Customer Name..." value={walkinName} onChange={e => setWalkinName(e.target.value)} style={{ padding: '8px 12px' }} />
+                <input type="text" className="input" placeholder="Phone Number..." value={walkinPhone} onChange={e => setWalkinPhone(e.target.value)} style={{ padding: '8px 12px' }} />
+              </div>
+            </div>
+          )}
 
           <div className="form-group">
             <label>Discount Amount (৳)</label>

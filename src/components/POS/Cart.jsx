@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Trash2, Plus, Minus, ShoppingCart, User } from 'lucide-react';
 import './Cart.css';
 
 function Cart({ items, onUpdateQty, onClear, onCheckout, customers, selectedCustomer, onSelectCustomer }) {
+  const [custSearch, setCustSearch] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
 
   return (
@@ -15,19 +18,48 @@ function Cart({ items, onUpdateQty, onClear, onCheckout, customers, selectedCust
         </button>
       </div>
 
-      <div className="cart-customer-selector">
+      <div className="cart-customer-selector" style={{ position: 'relative' }}>
         <User size={16} className="text-secondary" />
-        <select 
+        <input 
           className="input" 
-          style={{ border: 'none', background: 'transparent', padding: '0 8px', flex: 1, fontSize: 'var(--font-size-sm)', color: selectedCustomer ? 'var(--text-primary)' : 'var(--text-secondary)' }}
-          value={selectedCustomer?.id || ''}
-          onChange={(e) => onSelectCustomer(e.target.value)}
-        >
-          <option value="">Walk-in Customer</option>
-          {customers?.map(c => (
-            <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>
-          ))}
-        </select>
+          style={{ border: 'none', background: 'transparent', padding: '0 8px', flex: 1, fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', outline: 'none' }}
+          placeholder="Search Customer..."
+          value={selectedCustomer ? `${selectedCustomer.name} ${selectedCustomer.phone ? `(${selectedCustomer.phone})` : ''}` : custSearch}
+          onChange={(e) => {
+            if (selectedCustomer) onSelectCustomer('');
+            setCustSearch(e.target.value);
+            setDropdownOpen(true);
+          }}
+          onFocus={() => setDropdownOpen(true)}
+          onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
+        />
+        
+        {dropdownOpen && !selectedCustomer && (
+          <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', zIndex: 50, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+            <div 
+              style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', color: 'var(--color-primary)' }}
+              onClick={() => onSelectCustomer('')}>
+              ★ Walk-in Customer (Unknown)
+            </div>
+            
+            {customers
+              // Exclude pure walk-ins from the permanent selector loop
+              .filter(c => c.address !== '__WALKIN__' && (c.name.toLowerCase().includes(custSearch.toLowerCase()) || (c.phone && c.phone.includes(custSearch))))
+              .slice(0, 10) // Limit display height seamlessly
+              .map(c => (
+              <div 
+                key={c.id} 
+                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)' }} 
+                onClick={() => {
+                  onSelectCustomer(c.id);
+                  setCustSearch('');
+                }}
+              >
+                {c.name} {c.phone && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>({c.phone})</span>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="cart-items">
@@ -44,17 +76,14 @@ function Cart({ items, onUpdateQty, onClear, onCheckout, customers, selectedCust
               </div>
               <div className="cart-item-actions">
                 <div className="qty-controls">
-                  <button className="qty-btn" onClick={() => onUpdateQty(item.product_id, item.quantity - 1)}><Minus size={14}/></button>
+                  <button className="qty-btn" onClick={() => onUpdateQty(item.product_id, Math.max(1, (parseInt(item.quantity)||0) - 1))}><Minus size={14}/></button>
                   <input 
                     type="number" 
                     className="qty-display" 
-                    value={item.quantity === 0 ? '' : item.quantity} 
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0;
-                      onUpdateQty(item.product_id, val);
-                    }}
+                    value={item.quantity} 
+                    onChange={(e) => onUpdateQty(item.product_id, e.target.value)}
                     onBlur={(e) => {
-                      if (!e.target.value || e.target.value <= 0) onUpdateQty(item.product_id, 1);
+                      if (e.target.value === '' || parseFloat(e.target.value) <= 0) onUpdateQty(item.product_id, 1);
                     }}
                     style={{
                       width: '45px',
@@ -68,12 +97,12 @@ function Cart({ items, onUpdateQty, onClear, onCheckout, customers, selectedCust
                       MozAppearance: 'textfield'
                     }}
                   />
-                  <button className="qty-btn" onClick={() => onUpdateQty(item.product_id, item.quantity + 1)}><Plus size={14}/></button>
+                <button className="qty-btn" onClick={() => onUpdateQty(item.product_id, (parseInt(item.quantity)||0) + 1)}><Plus size={14}/></button>
                 </div>
                 <span className="cart-item-total text-primary font-bold">
                   ৳{item.total.toFixed(2)}
                 </span>
-                <button className="btn-icon text-danger" onClick={() => onUpdateQty(item.product_id, 0)}>
+                <button className="btn-icon text-danger" onClick={() => onUpdateQty(item.product_id, 'REMOVE')}>
                   <Trash2 size={16} />
                 </button>
               </div>
