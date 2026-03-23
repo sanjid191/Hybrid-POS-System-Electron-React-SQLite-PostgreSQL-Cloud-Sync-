@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { registerIpcHandlers } = require('./ipc-handlers');
+const { runMigrations } = require('../database/migrations');
 
 // Determine if we're in development
 const isDev = !app.isPackaged;
@@ -46,7 +47,12 @@ function createWindow() {
 // Register all IPC handlers
 registerIpcHandlers(ipcMain);
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  // Initialize SQLite Database schema
+  runMigrations();
+  
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
