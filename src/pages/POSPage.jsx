@@ -3,11 +3,24 @@ import ProductGrid from '../components/POS/ProductGrid';
 import Cart from '../components/POS/Cart';
 import PaymentDialog from '../components/POS/PaymentDialog';
 import { v4 as uuidv4 } from 'uuid';
+import InvoiceTemplate from '../components/Invoice/InvoiceTemplate';
 import './POSPage.css';
 
 function POSPage() {
   const [cart, setCart] = useState([]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [completedSale, setCompletedSale] = useState(null);
+
+  // Load Customers
+  useEffect(() => {
+    async function loadCustomers() {
+      const res = await window.electronAPI.getCustomers({});
+      if (res.success) setCustomers(res.data);
+    }
+    loadCustomers();
+  }, []);
 
   // Cart Management
   const addToCart = (product) => {
@@ -78,10 +91,24 @@ function POSPage() {
     try {
       const res = await window.electronAPI.createSale(saleData, cart);
       if (res.success) {
+        // Prepare completed sale object for the invoice before clearing cart
+        setCompletedSale({
+           ...saleData,
+           customer_name: selectedCustomer?.name || 'Walk-in Customer',
+           customer_phone: selectedCustomer?.phone || '',
+           customer_address: selectedCustomer?.address || '',
+           created_at: new Date().toISOString(),
+           items: cart
+        });
+        
         setCart([]);
+        setSelectedCustomer(null);
         setIsPaymentOpen(false);
-        // We will show success toast or auto-print here in Phase 5
-        alert(`Sale completed successfully! Change: ৳${Math.max(0, paid - finalTotal).toFixed(2)}`);
+        
+        // Timeout to allow React to render the InvoiceTemplate before calling print
+        setTimeout(() => {
+          window.print();
+        }, 300);
       } else {
         alert(`Failed to complete sale: ${res.error}`);
       }
@@ -105,6 +132,9 @@ function POSPage() {
           onUpdateQty={updateQuantity} 
           onClear={clearCart} 
           onCheckout={handleCheckout} 
+          customers={customers}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={(id) => setSelectedCustomer(customers.find(c => c.id === id) || null)}
         />
       </div>
 
@@ -115,6 +145,11 @@ function POSPage() {
           onConfirm={processSale}
         />
       )}
+
+      {/* Hidden Invoice Template for Printing */}
+      <div className="print-area">
+        {completedSale && <InvoiceTemplate sale={completedSale} />}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { Trash2, Plus, Minus, ShoppingCart, User } from 'lucide-react';
 import './Cart.css';
 
-function Cart({ items, onUpdateQty, onClear, onCheckout }) {
+function Cart({ items, onUpdateQty, onClear, onCheckout, customers, selectedCustomer, onSelectCustomer }) {
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
 
   return (
@@ -16,9 +16,18 @@ function Cart({ items, onUpdateQty, onClear, onCheckout }) {
       </div>
 
       <div className="cart-customer-selector">
-        {/* Placeholder for customer selector - will be wired in Phase 4/7 */}
         <User size={16} className="text-secondary" />
-        <span className="text-secondary text-sm">Walk-in Customer</span>
+        <select 
+          className="input" 
+          style={{ border: 'none', background: 'transparent', padding: '0 8px', flex: 1, fontSize: 'var(--font-size-sm)', color: selectedCustomer ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+          value={selectedCustomer?.id || ''}
+          onChange={(e) => onSelectCustomer(e.target.value)}
+        >
+          <option value="">Walk-in Customer</option>
+          {customers?.map(c => (
+            <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>
+          ))}
+        </select>
       </div>
 
       <div className="cart-items">

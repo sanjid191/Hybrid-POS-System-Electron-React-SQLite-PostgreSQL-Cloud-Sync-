@@ -26,3 +26,17 @@
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
   z-index: 5;
 }
+
+.print-area {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+}
+
+@media print {
+  .print-area {
+    position: static;
+    left: 0;
+    top: 0;
+  }
+}
