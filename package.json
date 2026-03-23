@@ -1,0 +1,47 @@
+{
+  "name": "hybrid-pos-system",
+  "version": "1.0.0",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev:react": "vite",
+    "dev:electron": "wait-on http://localhost:5173 && electron .",
+    "dev": "concurrently -k \"npm run dev:react\" \"npm run dev:electron\"",
+    "build": "vite build",
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "package": "npm run build && electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanjid191/Hybrid-POS-System-Electron-React-SQLite-PostgreSQL-Cloud-Sync-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sanjid191/Hybrid-POS-System-Electron-React-SQLite-PostgreSQL-Cloud-Sync-/issues"
+  },
+  "homepage": "https://github.com/sanjid191/Hybrid-POS-System-Electron-React-SQLite-PostgreSQL-Cloud-Sync-#readme",
+  "description": "",
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
+    "electron-rebuild": "^3.2.9",
+    "vite": "^8.0.1",
+    "wait-on": "^9.0.4"
+  }
+}
