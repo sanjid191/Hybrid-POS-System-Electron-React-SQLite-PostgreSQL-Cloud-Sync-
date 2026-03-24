@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # 🏗️ Hybrid POS System
 
@@ -465,4 +465,3 @@ This project is licensed under the **ISC License** — see the [LICENSE](LICENSE
 *Hybrid POS System — Because your business shouldn't stop when the internet does.*
 
 </div>
-]]>
