@@ -2,7 +2,7 @@
 
 # 🏗️ Hybrid POS System
 
-### Offline-First Point of Sale for Construction Materials Shops
+### Offline- Point of Sale for Construction Materials Shops
 
 A modern, cross-platform desktop POS application built with **Electron**, **React**, **SQLite**, and **PostgreSQL** cloud sync — engineered for uninterrupted retail operations with or without an internet connection.
 
