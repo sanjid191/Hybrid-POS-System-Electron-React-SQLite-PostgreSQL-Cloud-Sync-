@@ -5,6 +5,15 @@ out/
 *.sqlite
 *.sqlite3
 .env
-.env.local
+.env.*
+!.env.example
+backend/.env
+
+# Build outputs
+release/
+build/
+win-unpacked/
+
+# OS files
 .DS_Store
 Thumbs.db
