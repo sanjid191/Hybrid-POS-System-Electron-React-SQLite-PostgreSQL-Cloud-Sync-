@@ -146,7 +146,18 @@ function ProductsPage() {
 
                   return activeTab === 'inventory' ? (
                     <tr key={product.id}>
-                      <td className="font-medium text-white">{product.name}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                            {product.image ? (
+                              <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <Package size={20} opacity={0.3} />
+                            )}
+                          </div>
+                          <span className="font-medium text-white">{product.name}</span>
+                        </div>
+                      </td>
                       <td>{product.category || '—'}</td>
                       <td>৳{product.price.toFixed(2)}</td>
                       <td>৳{(product.cost_price || 0).toFixed(2)}</td>

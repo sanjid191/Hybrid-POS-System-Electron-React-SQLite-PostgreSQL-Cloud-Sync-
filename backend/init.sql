@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS products (
   stock NUMERIC(15,2) DEFAULT 0,
   low_stock_threshold NUMERIC(15,2) DEFAULT 5,
   barcode VARCHAR(50),
+  image TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

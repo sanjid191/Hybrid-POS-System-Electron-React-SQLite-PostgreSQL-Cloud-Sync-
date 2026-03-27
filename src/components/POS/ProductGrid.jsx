@@ -53,7 +53,11 @@ function ProductGrid({ onAddToCart }) {
                 onClick={() => !outOfStock && onAddToCart(product)}
               >
                 <div className="pg-card-img-placeholder">
-                  <Package size={32} opacity={0.3} />
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="pg-card-img" />
+                  ) : (
+                    <Package size={32} opacity={0.3} />
+                  )}
                 </div>
                 <div className="pg-card-body">
                   <h4 className="pg-card-name" title={product.name}>{product.name}</h4>

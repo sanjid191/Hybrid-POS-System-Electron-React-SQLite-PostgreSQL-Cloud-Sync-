@@ -75,6 +75,14 @@ function runMigrations() {
     );
   `);
 
+  // ── Add image column to products (safe migration) ──
+  try {
+    db.exec(`ALTER TABLE products ADD COLUMN image TEXT DEFAULT NULL`);
+    console.log('[Database] Added image column to products table.');
+  } catch (e) {
+    // Column already exists — ignore
+  }
+
   console.log('[Database] Migrations completed.');
 }
 

@@ -37,8 +37,8 @@ function getProductById(id) {
 function createProduct(data) {
   const db = getDbConnection();
   const stmt = db.prepare(`
-    INSERT INTO products (id, name, category, unit, price, cost_price, stock, low_stock_threshold, barcode)
-    VALUES (@id, @name, @category, @unit, @price, @cost_price, @stock, @low_stock_threshold, @barcode)
+    INSERT INTO products (id, name, category, unit, price, cost_price, stock, low_stock_threshold, barcode, image)
+    VALUES (@id, @name, @category, @unit, @price, @cost_price, @stock, @low_stock_threshold, @barcode, @image)
   `);
   
   const result = stmt.run({
@@ -50,7 +50,8 @@ function createProduct(data) {
     cost_price: data.cost_price || 0,
     stock: data.stock || 0,
     low_stock_threshold: data.low_stock_threshold || 5,
-    barcode: data.barcode || null
+    barcode: data.barcode || null,
+    image: data.image || null
   });
   
   return result.changes > 0 ? getProductById(data.id) : null;
